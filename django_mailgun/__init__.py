@@ -21,9 +21,9 @@ class MailgunBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, *args, **kwargs):
         access_key, server_name = (kwargs.pop('access_key', None),
                                    kwargs.pop('server_name', None))
-    
+
         super(MailgunBackend, self).__init__(
-                        fail_silently=fail_silently, 
+                        fail_silently=fail_silently,
                         *args, **kwargs)
 
         try:
@@ -56,13 +56,19 @@ class MailgunBackend(BaseEmailBackend):
                       for addr in email_message.recipients()]
 
         try:
+            data = {
+                "to": ", ".join(recipients),
+                "from": from_email,
+            }
+
+            if email_message.extra_headers:
+                for key in email_message.extra_headers:
+                    data[key] = email_message.extra_headers[key]
+
             r = requests.\
                 post(self._api_url + "messages.mime",
                      auth=("api", self._access_key),
-                     data={
-                            "to": ", ".join(recipients),
-                            "from": from_email,
-                         },
+                     data=data,
                      files={
                             "message": StringIO(email_message.message().as_string()),
                          }
